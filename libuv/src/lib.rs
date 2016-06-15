@@ -98,6 +98,20 @@ impl Loop {
             0 != libuv_sys::uv_loop_alive(self.uv_loop)
         }
     }
+
+    pub fn now(&self) -> u64 {
+        unsafe {
+            libuv_sys::uv_now(self.uv_loop) as u64
+        }
+    }
+
+    pub fn update_time(&self) {
+        unsafe {
+            libuv_sys::uv_update_time(self.uv_loop);
+        }
+    }
+
+    // TODO : implement walk
 }
 
 impl Drop for Loop {
