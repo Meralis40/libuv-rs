@@ -167,7 +167,18 @@ trait Handle<T> {
     // TODO : recv_buffer_size (anyone has usage ??)
 }
 
+// generic Request trait 
+trait Request {
+    unsafe fn get_request_ptr(&self) -> *mut libuv_sys::uv_req_t;
 
+    fn cancel(&self) -> Result<()> {
+        unsafe {
+            let u = libuv_sys::uv_cancel(self.get_request_ptr()) as i32;
+            if u == 0 { Ok(()) }
+            else { Err(u) }
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
