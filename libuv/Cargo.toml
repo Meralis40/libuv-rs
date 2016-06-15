@@ -8,4 +8,5 @@ keywords = ["uv","epoll","iocp","select"]
 license = "MIT"
 
 [dependencies]
-libuv-sys = "0.1.0"
+libuv-sys = { path="../libuv-sys" }
+libc = "0.1.10"

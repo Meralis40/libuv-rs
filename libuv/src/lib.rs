@@ -11,11 +11,11 @@ pub fn version_string() -> &'static str {
     unsafe { CStr::from_ptr(libuv_sys::uv_version_string()).to_str().unwrap() }
 }
 
-pub fn strerror(err: u32) -> &'static str {
+pub fn strerror(err: i32) -> &'static str {
     unsafe { CStr::from_ptr(libuv_sys::uv_strerror(err as libc::c_int)).to_str().unwrap() }
 }
 
-pub fn err_name(err: u32) -> &'static str {
+pub fn err_name(err: i32) -> &'static str {
     unsafe { CStr::from_ptr(libuv_sys::uv_err_name(err as libc::c_int)).to_str().unwrap() }
 }
 
@@ -42,6 +42,43 @@ impl std::convert::Into<libuv_sys::uv_run_mode> for RunMode {
             RunMode::Default => libuv_sys::UV_RUN_DEFAULT,
             RunMode::NoWait => libuv_sys::UV_RUN_NOWAIT,
             RunMode::Once => libuv_sys::UV_RUN_ONCE,
+        }
+    }
+}
+
+pub type Result<T> = std::result::Result<T, i32>;
+
+// loop wrapper
+// TODO : add support for data...
+pub struct Loop {
+    uv_loop: *mut libuv_sys::uv_loop_t,
+}
+
+impl Loop {
+    pub fn new() -> Result<Loop> {
+        unsafe {
+            let q = libc::malloc(libuv_sys::uv_loop_size()) as *mut libuv_sys::uv_loop_t;
+            let u = libuv_sys::uv_loop_init(q) as i32;
+
+            if u != 0 {
+                libc::free(q as *mut libc::c_void);
+                return Err(u);
+            }
+
+            let mut l = Loop { uv_loop: q };
+            (*q).data = (&mut l as *mut Loop) as *mut libc::c_void;
+            Ok(l)
+        }
+    }
+}
+
+impl Drop for Loop {
+    fn drop(&mut self) {
+        unsafe {
+            (*self.uv_loop).data = std::ptr::null_mut();
+            libuv_sys::uv_loop_close(self.uv_loop);
+            libc::free(self.uv_loop as *mut libc::c_void);
+            self.uv_loop = std::ptr::null_mut();
         }
     }
 }
