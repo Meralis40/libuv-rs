@@ -126,7 +126,7 @@ impl Drop for Loop {
 }
 
 // generic Handle trait 
-trait Handle<T> {
+trait Handle {
     unsafe fn get_handle_ptr(&self) -> *mut libuv_sys::uv_handle_t;
 
     fn is_active(&self) -> bool {
@@ -179,6 +179,49 @@ trait Request {
         }
     }
 }
+
+// generic Stream trait 
+trait Stream : Handle {
+    unsafe fn get_stream_ptr(&self) -> *mut libuv_sys::uv_stream_t;
+
+    // TODO : shutdown
+
+    // TODO : listen
+
+    // TODO : accept
+    
+    // TODO : read_start
+
+    fn read_stop(&self) -> Result<()> {
+        unsafe {
+            let u = libuv_sys::uv_read_stop(self.get_stream_ptr()) as i32;
+
+            if u == 0 { Ok(()) }
+            else { Err(u) }
+        }
+    }
+
+    // TODO : write
+
+    // TODO : write2
+
+    // TODO : try_write
+
+    fn is_readable(&self) -> bool {
+        unsafe {
+            0 != libuv_sys::uv_is_readable(self.get_stream_ptr()) as i32
+        }
+    }
+
+    fn is_writable(&self) -> bool {
+        unsafe {
+            0 != libuv_sys::uv_is_writable(self.get_stream_ptr()) as i32
+        }
+    }
+
+    // TODO : set_blocking (anyone uses it ??)
+}
+
 
 #[cfg(test)]
 mod tests {
