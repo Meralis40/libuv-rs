@@ -125,6 +125,50 @@ impl Drop for Loop {
     }
 }
 
+// generic Handle trait 
+trait Handle<T> {
+    unsafe fn get_handle_ptr(&self) -> *mut libuv_sys::uv_handle_t;
+
+    fn is_active(&self) -> bool {
+        unsafe {
+            0 != libuv_sys::uv_is_active(self.get_handle_ptr())
+        }
+    }
+
+    fn is_closing(&self) -> bool {
+        unsafe {
+            0 != libuv_sys::uv_is_closing(self.get_handle_ptr())
+        }
+    }
+
+    // TODO : close (require thinking about callbacks)
+
+    // addref because ref is a keyword
+    fn addref(&self) {
+        unsafe {
+            libuv_sys::uv_ref(self.get_handle_ptr());
+        }
+    }
+
+    fn unref(&self) {
+        unsafe {
+            libuv_sys::uv_unref(self.get_handle_ptr());
+        }
+    }
+
+    fn has_ref(&self) -> bool {
+        unsafe {
+            0 != libuv_sys::uv_has_ref(self.get_handle_ptr())
+        }
+    }
+
+    // TODO : send_buffer_size (anyone has usage ??)
+
+    // TODO : recv_buffer_size (anyone has usage ??)
+}
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
