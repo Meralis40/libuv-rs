@@ -58,6 +58,10 @@ impl Loop {
     pub fn new() -> Result<Loop> {
         unsafe {
             let q = libc::malloc(libuv_sys::uv_loop_size()) as *mut libuv_sys::uv_loop_t;
+            if q == std::ptr::null_mut::<libuv_sys::uv_loop_t>() {
+                panic!("Failed to allocate memory");
+            }
+
             let u = libuv_sys::uv_loop_init(q) as i32;
 
             if u != 0 {
@@ -68,6 +72,30 @@ impl Loop {
             let mut l = Loop { uv_loop: q };
             (*q).data = (&mut l as *mut Loop) as *mut libc::c_void;
             Ok(l)
+        }
+    }
+
+    pub unsafe fn to_uv(&self) -> *mut libuv_sys::uv_loop_t {
+        self.uv_loop
+    }
+
+    pub fn run(&self, mode: RunMode) -> Result<()> {
+        unsafe {
+            let u = libuv_sys::uv_run(self.uv_loop, mode.into());
+
+            if u != 0 { Err(u) } else { Ok(()) }
+        }
+    }
+
+    pub fn stop(&self) {
+        unsafe {
+            libuv_sys::uv_stop(self.uv_loop);
+        }
+    }
+
+    pub fn is_alive(&self) -> bool {
+        unsafe {
+            0 != libuv_sys::uv_loop_alive(self.uv_loop)
         }
     }
 }
